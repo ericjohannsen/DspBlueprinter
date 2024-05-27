@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using DspBlueprinter.Cryptography;
+using System;
+using System.IO;
+using System.IO.Compression;
 using System.Text;
-using System.Threading.Tasks;
+using System.Web;
 
 namespace DspBlueprinter
 {
-    using DspBlueprinter.Cryptography;
-    using System;
-    using System.IO;
-    using System.IO.Compression;
-    using System.Text;
-    using System.Text.Json;
-    using System.Text.RegularExpressions;
-    using System.Web;
-
-
     public class Blueprint
     {
         public int Layout { get; private set; }
@@ -49,13 +40,27 @@ namespace DspBlueprinter
             Icon2 = icon2;
             Icon3 = icon3;
             Icon4 = icon4;
-            Timestamp = timestamp ?? DateTimeTools.CSharpNow();
+            Timestamp = timestamp ?? DateTime.Now;
             GameVersion = gameVersion;
             ShortDesc = shortDesc;
             LongDesc = longDesc;
             Data = data;
         }
 
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Game Version: {GameVersion}");
+            sb.AppendLine($"Timestamp   : {Timestamp.ToLongTimeString()}");
+            sb.AppendLine($"Short Descr : {ShortDesc}");
+            sb.AppendLine($"Long Descr  : {LongDesc}");
+            sb.AppendLine("Buildings:");
+            foreach (var building in DecodedData.Buildings)
+            {
+                sb.AppendLine(building.Item.ToString());
+            }
+            return sb.ToString();
+        }
         public BlueprintData DecodedData => BlueprintData.Deserialize(Data);
 
         public static Blueprint FromBlueprintString(string bpString, bool validateHash = true)
@@ -95,7 +100,7 @@ namespace DspBlueprinter
                 throw new FormatException("Invalid fixed value in blueprint string.");
             }
 
-            DateTime decodedTimestamp = DateTimeTools.CSharpToDateTime(timestamp);
+            DateTime decodedTimestamp = new DateTime(timestamp);
 
             string[] b64dataHashSplit = b64dataHash.Split('\"');
 
@@ -127,7 +132,7 @@ namespace DspBlueprinter
             Icon3.ToString(),
             Icon4.ToString(),
             "0",
-            DateTimeTools.DateTimeToCSharp(Timestamp).ToString(),
+            Timestamp.Ticks.ToString(),
             GameVersion,
             HttpUtility.UrlEncode(ShortDesc)
         };

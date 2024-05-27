@@ -34,14 +34,27 @@ namespace DspBlueprinter
 
             foreach (var (type, name) in _fields)
             {
-                object value = type switch
-                {
-                    "b" => data[offset], // byte
-                    "H" => BitConverter.ToUInt16(data, offset), // ushort (2 bytes)
-                    "L" => BitConverter.ToUInt32(data, offset), // uint (4 bytes)
-                    "f" => BitConverter.ToSingle(data, offset), // float (4 bytes)
-                    _ => throw new InvalidOperationException($"Unknown type: {type}")
-                };
+                // For an unknown reason, every element of the array ends up typed as Single with this code:
+                //object value = type switch
+                //{
+                //    "b" => (byte)data[offset], // byte
+                //    "H" => BitConverter.ToUInt16(data, offset), // ushort (2 bytes)
+                //    "L" => BitConverter.ToUInt32(data, offset), // uint (4 bytes)
+                //    "f" => BitConverter.ToSingle(data, offset), // float (4 bytes)
+                //    _ => throw new InvalidOperationException($"Unknown type: {type}")
+                //};
+
+                object value;
+                if (type == "b")
+                    value = data[offset];
+                else if (type == "H")
+                    value = BitConverter.ToUInt16(data, offset); // ushort (2 bytes)
+                else if (type == "L")
+                    value = BitConverter.ToUInt32(data, offset); // uint (4 bytes)
+                else if (type == "f")
+                    value = BitConverter.ToSingle(data, offset); // float (4 bytes)
+                else
+                    throw new InvalidOperationException($"Unknown type: {type}");
 
                 result[name] = value;
                 offset += GetSize(type);

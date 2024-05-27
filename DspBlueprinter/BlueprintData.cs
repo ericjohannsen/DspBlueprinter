@@ -1,33 +1,10 @@
-﻿using System;
+﻿using DspBlueprinter.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DspBlueprinter
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Text.Json;
-    using System.Web;
-
-    public enum LogisticsStationDirection
-    {
-        Input = 0,
-        Output = 1,
-        Both = 2
-    }
-
-    public enum DysonSphereItem
-    {
-        Unknown = 0,
-        PlanetaryLogisticsStation = 1,
-        InterstellarLogisticsStation = 2,
-        // Add other item types as needed
-    }
-
     public class StationParameters
     {
         private static readonly int _STORAGE_OFFSET = 0;
@@ -53,7 +30,7 @@ namespace DspBlueprinter
                 int itemId = parameters[offset];
                 if (itemId == 0)
                 {
-                    storage.Add(null);
+                    storage.Add(StorageItem.EmptyItem);
                 }
                 else
                 {
@@ -77,7 +54,7 @@ namespace DspBlueprinter
                 int storageIndex = parameters[offset + 1];
                 if (storageIndex == 0)
                 {
-                    slots.Add(null);
+                    slots.Add(SlotItem.EmptySlotItem);
                 }
                 else
                 {
@@ -137,13 +114,20 @@ namespace DspBlueprinter
         public Dictionary<string, object> ToDict()
         {
             return new Dictionary<string, object>
-        {
-            { "item_id", ItemId },
-            { "local_logic", LocalLogic },
-            { "remote_logic", RemoteLogic },
-            { "max_count", MaxCount }
-        };
+            {
+                { "item_id", ItemId },
+                { "local_logic", LocalLogic },
+                { "remote_logic", RemoteLogic },
+                { "max_count", MaxCount }
+            };
         }
+        public static readonly StorageItem EmptyItem = new StorageItem()
+        {
+            ItemId = 0,
+            LocalLogic = 0,
+            RemoteLogic = 0,
+            MaxCount = 0,
+        };
     }
 
     public class SlotItem
@@ -154,11 +138,16 @@ namespace DspBlueprinter
         public Dictionary<string, object> ToDict()
         {
             return new Dictionary<string, object>
-        {
-            { "direction", Direction.ToString() },
-            { "storage_index", StorageIndex }
-        };
+            {
+                { "direction", Direction.ToString() },
+                { "storage_index", StorageIndex }
+            };
         }
+        public static readonly SlotItem EmptySlotItem = new SlotItem()
+        {
+            Direction = LogisticsStationDirection.Input,
+            StorageIndex = 0,
+        };
     }
 
     public class BlueprintArea
@@ -237,7 +226,7 @@ namespace DspBlueprinter
             {
                 try
                 {
-                    return (DysonSphereItem)Enum.Parse(typeof(DysonSphereItem), _fields["item_id"].ToString());
+                    return (DysonSphereItem)Enum.Parse(typeof(DysonSphereItem), _fields["item_id"]?.ToString() ?? "Unknown");
                 }
                 catch
                 {
@@ -271,10 +260,9 @@ namespace DspBlueprinter
         public Dictionary<string, object> ToDict()
         {
             var result = _fields.ToDictionary(entry => entry.Key, entry => entry.Value);
-            if (Item != null)
-            {
-                result["item_id"] = Item.ToString();
-            }
+
+            result["item_id"] = Item.ToString();
+
             result["parameters"] = Parameters is List<int> parameters ? parameters : ((StationParameters)Parameters).ToDict();
             return result;
         }
@@ -285,7 +273,7 @@ namespace DspBlueprinter
             offset += _BLUEPRINT_BUILDING.Size;
 
             var parameters = new List<int>();
-            for (int i = 0; i < (int)fields["parameter_count"]; i++)
+            for (ushort i = 0; i < (ushort)fields["parameter_count"]; i++)
             {
                 parameters.Add(BitConverter.ToInt32(data, offset + (4 * i)));
             }
@@ -304,7 +292,7 @@ namespace DspBlueprinter
         ("L", "dragbox_size_x"),
         ("L", "dragbox_size_y"),
         ("L", "primary_area_index"),
-        ("B", "area_count")
+        ("b", "area_count")
         });
 
         private static readonly NamedStruct _BUILDING_HEADER = new NamedStruct(new (string, string)[]
@@ -339,7 +327,8 @@ namespace DspBlueprinter
 
             var areas = new List<BlueprintArea>();
             int offset = _HEADER.Size;
-            for (int areaId = 0; areaId < (int)header["area_count"]; areaId++)
+
+            for (int areaId = 0; areaId < (byte)header["area_count"]; areaId++)
             {
                 var area = BlueprintArea.Deserialize(data, offset);
                 offset += area.Size;
@@ -349,7 +338,7 @@ namespace DspBlueprinter
             var buildings = new List<BlueprintBuilding>();
             var buildingHeader = _BUILDING_HEADER.UnpackHead(data, offset);
             offset += _BUILDING_HEADER.Size;
-            for (int buildingId = 0; buildingId < (int)buildingHeader["building_count"]; buildingId++)
+            for (uint buildingId = 0; buildingId < (uint)buildingHeader["building_count"]; buildingId++)
             {
                 var building = BlueprintBuilding.Deserialize(data, offset);
                 offset += building.Size;

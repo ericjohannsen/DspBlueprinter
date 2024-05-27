@@ -14,6 +14,7 @@ namespace DspBlueprinter.Tests
             // Act
             var blueprint = Blueprint.FromBlueprintString(blueprintData, validateHash: true);
 
+            var decoded = blueprint.DecodedData;
             // Assert
             
         }
