@@ -61,7 +61,19 @@ namespace DspBlueprinter
             }
             return sb.ToString();
         }
-        public BlueprintData DecodedData => BlueprintData.Deserialize(Data);
+
+        public Blueprint Clone() => FromBlueprintString(Serialize(), true);
+
+        private BlueprintData? _decodedData = null;
+        public BlueprintData DecodedData
+        {
+            get
+            {
+                if (_decodedData == null)
+                    _decodedData = BlueprintData.Deserialize(Data);
+                return _decodedData;
+            }
+        }
 
         public static Blueprint FromBlueprintString(string bpString, bool validateHash = true)
         {
