@@ -1,5 +1,7 @@
 ﻿using DspBlueprinter.Cryptography;
+using DspBlueprinter.Enums;
 using System;
+using System.Collections;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
@@ -7,6 +9,10 @@ using System.Web;
 
 namespace DspBlueprinter
 {
+    /// <summary>
+    /// State management for the blueprint is currently messy. There's the byte[] representation, the convenience representation BlueprintData, and the string representation
+    /// that is used by the game.
+    /// </summary>
     public class Blueprint
     {
         public int Layout { get; private set; }
@@ -47,6 +53,15 @@ namespace DspBlueprinter
             Data = data;
         }
 
+        /// <summary>
+        /// Get the Item ID of a building (e.g. SorterMkI)
+        /// </summary>
+        /// <param name="buildingIdx"></param>
+        public DysonSphereItem GetBuildingItemId(int buildingIdx)
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -64,16 +79,7 @@ namespace DspBlueprinter
 
         public Blueprint Clone() => FromBlueprintString(Serialize(), true);
 
-        private BlueprintData? _decodedData = null;
-        public BlueprintData DecodedData
-        {
-            get
-            {
-                if (_decodedData == null)
-                    _decodedData = BlueprintData.Deserialize(Data);
-                return _decodedData;
-            }
-        }
+        public BlueprintData DecodedData => BlueprintData.Deserialize(Data);
 
         public static Blueprint FromBlueprintString(string bpString, bool validateHash = true)
         {
@@ -131,9 +137,6 @@ namespace DspBlueprinter
 
         public string Serialize()
         {
-            // This will throw NotSupportedException for now
-            Data = BlueprintData.Serialize(DecodedData); // Only need to do this if blueprint is "dirty" could optimize.
-
             byte[] compressedData = Compress(Data);
             string b64Data = Convert.ToBase64String(compressedData);
 
@@ -202,6 +205,24 @@ namespace DspBlueprinter
                 gzip.CopyTo(output);
             }
             return output.ToArray();
+        }
+
+        internal void WriteDataInt32(int startIndex, int replaceWith)
+        {
+            if (Data == null)
+            {
+                throw new ArgumentNullException(nameof(Data));
+            }
+
+            if (startIndex < 0 || startIndex + 4 > Data.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index is out of range or does not provide enough space for an Int32 value.");
+            }
+
+            Data[startIndex] = (byte)(replaceWith & 0xFF);
+            Data[startIndex + 1] = (byte)((replaceWith >> 8) & 0xFF);
+            Data[startIndex + 2] = (byte)((replaceWith >> 16) & 0xFF);
+            Data[startIndex + 3] = (byte)((replaceWith >> 24) & 0xFF);
         }
     }
 }

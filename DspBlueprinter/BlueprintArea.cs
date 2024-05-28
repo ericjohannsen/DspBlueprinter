@@ -20,16 +20,16 @@ namespace DspBlueprinter
         ("H", "height")
         });
 
-        private Dictionary<string, object> _fields;
+        private Dictionary<string, (object data, int offset, int width)> _fields;
 
-        public BlueprintArea(Dictionary<string, object> fields)
+        public BlueprintArea(Dictionary<string, (object data, int offset, int width)> fields)
         {
             _fields = fields;
         }
 
         public int Size => _BLUEPRINT_AREA.Size;
 
-        public Dictionary<string, object> ToDict() => _fields;
+        public Dictionary<string, (object data, int offset, int width)> ToDict() => _fields;
 
         public static BlueprintArea Deserialize(byte[] data, int offset)
         {

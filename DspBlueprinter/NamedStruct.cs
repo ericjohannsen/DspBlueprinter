@@ -28,9 +28,9 @@ namespace DspBlueprinter
 
         public int Size => _size;
 
-        public Dictionary<string, object> UnpackHead(byte[] data, int offset = 0)
+        public Dictionary<string, (object data, int offset, int width)> UnpackHead(byte[] data, int offset = 0)
         {
-            var result = new Dictionary<string, object>();
+            var result = new Dictionary<string, (object data, int offset, int width)>();
 
             foreach (var (type, name) in _fields)
             {
@@ -44,15 +44,15 @@ namespace DspBlueprinter
                 //    _ => throw new InvalidOperationException($"Unknown type: {type}")
                 //};
 
-                object value;
+                (object data, int offset, int width) value;
                 if (type == "b")
-                    value = data[offset];
+                    value = (data[offset], offset, 1);
                 else if (type == "H")
-                    value = BitConverter.ToUInt16(data, offset); // ushort (2 bytes)
+                    value = (BitConverter.ToUInt16(data, offset), offset, 2); // ushort (2 bytes)
                 else if (type == "L")
-                    value = BitConverter.ToUInt32(data, offset); // uint (4 bytes)
+                    value = (BitConverter.ToUInt32(data, offset), offset, 4); // uint (4 bytes)
                 else if (type == "f")
-                    value = BitConverter.ToSingle(data, offset); // float (4 bytes)
+                    value = (BitConverter.ToSingle(data, offset), offset, 4); // float (4 bytes)
                 else
                     throw new InvalidOperationException($"Unknown type: {type}");
 

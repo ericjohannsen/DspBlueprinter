@@ -14,17 +14,17 @@ namespace DspBlueprinter
         private static readonly int _PARAMETERS_OFFSET = _SLOTS_OFFSET + 128;
 
         public (int workEnergy, int droneRange, int vesselRange, bool orbitalCollector, int warpDistance, bool equipWarper, int droneCount, int vesselCount) Parameters { get; private set; }
-        public List<StorageItem> Storage { get; private set; }
-        public List<SlotItem> Slots { get; private set; }
+        public IReadOnlyList<StorageItem> Storage { get; private set; }
+        public IReadOnlyList<SlotItem> Slots { get; private set; }
 
-        public StationParameters(List<int> parameters, int storageLen, int slotsLen)
+        public StationParameters(IReadOnlyList<int> parameters, int storageLen, int slotsLen)
         {
             Storage = ParseStorage(parameters, storageLen);
             Slots = ParseSlots(parameters, slotsLen);
             Parameters = ParseParameters(parameters);
         }
 
-        private List<StorageItem> ParseStorage(List<int> parameters, int storageLen)
+        private IReadOnlyList<StorageItem> ParseStorage(IReadOnlyList<int> parameters, int storageLen)
         {
             var storage = new List<StorageItem>();
             for (int offset = _STORAGE_OFFSET; offset < _STORAGE_OFFSET + (6 * storageLen); offset += 6)
@@ -45,10 +45,10 @@ namespace DspBlueprinter
                     });
                 }
             }
-            return storage;
+            return storage.AsReadOnly();
         }
 
-        private List<SlotItem> ParseSlots(List<int> parameters, int slotsLen)
+        private IReadOnlyList<SlotItem> ParseSlots(IReadOnlyList<int> parameters, int slotsLen)
         {
             var slots = new List<SlotItem>();
             for (int offset = _SLOTS_OFFSET; offset < _SLOTS_OFFSET + (4 * slotsLen); offset += 4)
@@ -67,10 +67,10 @@ namespace DspBlueprinter
                     });
                 }
             }
-            return slots;
+            return slots.AsReadOnly();
         }
 
-        private (int workEnergy, int droneRange, int vesselRange, bool orbitalCollector, int warpDistance, bool equipWarper, int droneCount, int vesselCount) ParseParameters(List<int> parameters)
+        private (int workEnergy, int droneRange, int vesselRange, bool orbitalCollector, int warpDistance, bool equipWarper, int droneCount, int vesselCount) ParseParameters(IReadOnlyList<int> parameters)
         {
             return (
                 parameters[_PARAMETERS_OFFSET],
@@ -88,8 +88,8 @@ namespace DspBlueprinter
         {
             return new Dictionary<string, object>
         {
-            { "storage", Storage.Select(s => s?.ToDict()).ToList() },
-            { "slots", Slots.Select(s => s?.ToDict()).ToList() },
+            { "storage", Storage.Select(s => s?.ToDict()).ToList().AsReadOnly() },
+            { "slots", Slots.Select(s => s?.ToDict()).ToList().AsReadOnly() },
             { "parameters", new
                 {
                     Parameters.workEnergy,

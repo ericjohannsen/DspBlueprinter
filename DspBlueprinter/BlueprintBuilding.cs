@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace DspBlueprinter
 {
+    /// <summary>
+    /// This is a read-only convenience representation of the blueprint's state. The source of truth is the Data byte[].
+    /// </summary>
     public class BlueprintBuilding
     {
         private static readonly NamedStruct _BLUEPRINT_BUILDING = new NamedStruct(new (string, string)[]
@@ -37,13 +40,16 @@ namespace DspBlueprinter
         ("H", "parameter_count")
         });
 
-        private Dictionary<string, object> _fields;
-        private List<int> _parameters;
+        private IReadOnlyDictionary<string, (object data, int offset, int width)> _data;
+        private IReadOnlyList<int> _parameters;
+        public int ItemIdOffset { get; private set; }
 
-        public BlueprintBuilding(Dictionary<string, object> fields, List<int> parameters)
+
+        public BlueprintBuilding(IReadOnlyDictionary<string, (object data, int offset, int width)> data, IReadOnlyList<int> parameters)
         {
-            _fields = fields;
+            _data = data;
             _parameters = parameters;
+            ItemIdOffset = _data["item_id"].offset;
         }
 
         public DysonSphereItem Item
@@ -52,21 +58,18 @@ namespace DspBlueprinter
             {
                 try
                 {
-                    return (DysonSphereItem)Enum.Parse(typeof(DysonSphereItem), _fields["item_id"]?.ToString() ?? "Unknown");
+                    return (DysonSphereItem)Enum.Parse(typeof(DysonSphereItem), _data["item_id"].data?.ToString() ?? "Unknown");
                 }
                 catch
                 {
-                    throw new Exception($"Invalid item_id: {_fields["item_id"]}");
+                    throw new Exception($"Invalid item_id: {_data["item_id"]}");
                 }
             }
         }
 
-        public void ChangeBuilding(DysonSphereItem updatedBuilding) =>
-            _fields["item_id"] = (int)updatedBuilding;
+        public IReadOnlyDictionary<string, (object data, int offset, int width)> Data => _data;
 
-        public Dictionary<string, object> Data => _fields;
-
-        public List<int> RawParameters => _parameters;
+        public IReadOnlyList<int> RawParameters => _parameters;
 
         public object Parameters
         {
@@ -88,7 +91,7 @@ namespace DspBlueprinter
 
         public Dictionary<string, object> ToDict()
         {
-            var result = _fields.ToDictionary(entry => entry.Key, entry => entry.Value);
+            var result = _data.ToDictionary(entry => entry.Key, entry => entry.Value.data);
 
             result["item_id"] = Item.ToString();
 
@@ -102,7 +105,7 @@ namespace DspBlueprinter
             offset += _BLUEPRINT_BUILDING.Size;
 
             var parameters = new List<int>();
-            for (ushort i = 0; i < (ushort)fields["parameter_count"]; i++)
+            for (ushort i = 0; i < (ushort)fields["parameter_count"].data; i++)
             {
                 parameters.Add(BitConverter.ToInt32(data, offset + (4 * i)));
             }

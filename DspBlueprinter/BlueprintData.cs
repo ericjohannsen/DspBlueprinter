@@ -2,6 +2,7 @@
 using DspBlueprinter.Enums;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace DspBlueprinter
@@ -27,25 +28,25 @@ namespace DspBlueprinter
         ("L", "building_count")
         });
 
-        private Dictionary<string, object> _header;
-        private List<BlueprintArea> _areas;
-        private List<BlueprintBuilding> _buildings;
+        private IReadOnlyDictionary<string, object> _header;
+        private IReadOnlyList<BlueprintArea> _areas;
+        private IReadOnlyList<BlueprintBuilding> _buildings;
 
-        public BlueprintData(Dictionary<string, object> header, List<BlueprintArea> areas, List<BlueprintBuilding> buildings)
+        public BlueprintData(ImmutableDictionary<string, object> header, ImmutableList<BlueprintArea> areas, ImmutableList<BlueprintBuilding> buildings)
         {
             _header = header;
             _areas = areas;
             _buildings = buildings;
         }
 
-        public List<BlueprintBuilding> Buildings => _buildings;
+        public IReadOnlyList<BlueprintBuilding> Buildings => _buildings;
 
-        public Dictionary<string, object> ToDict()
+        public ImmutableDictionary<string, object> ToDict()
         {
             var result = _header.ToDictionary(entry => entry.Key, entry => entry.Value);
             result["areas"] = _areas.Select(area => area.ToDict()).ToList();
             result["buildings"] = _buildings.Select(building => building.ToDict()).ToList();
-            return result;
+            return result.ToImmutableDictionary();
         }
 
         public static BlueprintData Deserialize(byte[] data)
@@ -55,7 +56,7 @@ namespace DspBlueprinter
             var areas = new List<BlueprintArea>();
             int offset = _HEADER.Size;
 
-            for (int areaId = 0; areaId < (byte)header["area_count"]; areaId++)
+            for (int areaId = 0; areaId < (byte)header["area_count"].data; areaId++)
             {
                 var area = BlueprintArea.Deserialize(data, offset);
                 offset += area.Size;
@@ -65,20 +66,19 @@ namespace DspBlueprinter
             var buildings = new List<BlueprintBuilding>();
             var buildingHeader = _BUILDING_HEADER.UnpackHead(data, offset);
             offset += _BUILDING_HEADER.Size;
-            for (uint buildingId = 0; buildingId < (uint)buildingHeader["building_count"]; buildingId++)
+            for (uint buildingId = 0; buildingId < (uint)buildingHeader["building_count"].data; buildingId++)
             {
                 var building = BlueprintBuilding.Deserialize(data, offset);
+                var startOfBuilding = offset;
+
                 offset += building.Size;
                 buildings.Add(building);
             }
 
-            return new BlueprintData(header, areas, buildings);
-        }
-
-        public static byte[] Serialize(BlueprintData data)
-        {
-            throw new NotImplementedException("Need to convert the deserialized representation back into a byte array. Maybe done in Python code?"); 
+            return new BlueprintData(
+                header.Select(h => new { Key = h.Key, Value = h.Value.data }).ToDictionary(k => k.Key, v => v.Value).ToImmutableDictionary(), 
+                areas.ToImmutableList(), 
+                buildings.ToImmutableList());
         }
     }
-
 }

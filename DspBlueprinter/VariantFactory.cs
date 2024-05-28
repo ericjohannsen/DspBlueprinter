@@ -38,7 +38,8 @@ namespace DspBlueprinter
                 if (replacementMap.TryGetValue(building.Item, out var replaceWith))
                 {
                     Console.WriteLine($"        Replacing {modified.DecodedData.Buildings[i].Item} with {replaceWith}");
-                    modified.DecodedData.Buildings[i].ChangeBuilding(replaceWith);
+                    var dataOffset = building.ItemIdOffset;
+                    modified.WriteDataInt32(dataOffset, (int)replaceWith);
                 }
             }
 
