@@ -207,6 +207,13 @@ namespace DspBlueprinter
             return output.ToArray();
         }
 
+        /// <summary>
+        /// Data is always little endian.
+        /// </summary>
+        /// <param name="startIndex"></param>
+        /// <param name="replaceWith"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         internal void WriteDataInt32(int startIndex, int replaceWith)
         {
             if (Data == null)
@@ -218,11 +225,33 @@ namespace DspBlueprinter
             {
                 throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index is out of range or does not provide enough space for an Int32 value.");
             }
+#if DEBUG
+            var dbg = ReadDataInt32(Data, startIndex);
+            throw new Exception("Index appears to be incorrect because the data isn't what we expect.");
+#endif
 
             Data[startIndex] = (byte)(replaceWith & 0xFF);
             Data[startIndex + 1] = (byte)((replaceWith >> 8) & 0xFF);
             Data[startIndex + 2] = (byte)((replaceWith >> 16) & 0xFF);
             Data[startIndex + 3] = (byte)((replaceWith >> 24) & 0xFF);
+        }
+
+        public static int ReadDataInt32(byte[] byteArray, int startIndex)
+        {
+            if (byteArray == null)
+            {
+                throw new ArgumentNullException(nameof(byteArray));
+            }
+
+            if (startIndex < 0 || startIndex + 4 > byteArray.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index is out of range or does not provide enough space to read an Int32 value.");
+            }
+
+            return byteArray[startIndex] |
+                   (byteArray[startIndex + 1] << 8) |
+                   (byteArray[startIndex + 2] << 16) |
+                   (byteArray[startIndex + 3] << 24);
         }
     }
 }
