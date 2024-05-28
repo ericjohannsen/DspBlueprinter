@@ -74,6 +74,11 @@ namespace DspBlueprinter
 
             return new BlueprintData(header, areas, buildings);
         }
+
+        public static byte[] Serialize(BlueprintData data)
+        {
+            throw new NotImplementedException("Need to convert the deserialized representation back into a byte array. Maybe done in Python code?"); 
+        }
     }
 
 }

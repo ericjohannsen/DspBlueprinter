@@ -131,23 +131,26 @@ namespace DspBlueprinter
 
         public string Serialize()
         {
+            // This will throw NotSupportedException for now
+            Data = BlueprintData.Serialize(DecodedData); // Only need to do this if blueprint is "dirty" could optimize.
+
             byte[] compressedData = Compress(Data);
             string b64Data = Convert.ToBase64String(compressedData);
 
             var components = new[]
             {
-            "0",
-            Layout.ToString(),
-            Icon0.ToString(),
-            Icon1.ToString(),
-            Icon2.ToString(),
-            Icon3.ToString(),
-            Icon4.ToString(),
-            "0",
-            Timestamp.Ticks.ToString(),
-            GameVersion,
-            HttpUtility.UrlEncode(ShortDesc)
-        };
+                "0",
+                Layout.ToString(),
+                Icon0.ToString(),
+                Icon1.ToString(),
+                Icon2.ToString(),
+                Icon3.ToString(),
+                Icon4.ToString(),
+                "0",
+                Timestamp.Ticks.ToString(),
+                GameVersion,
+                HttpUtility.UrlEncode(ShortDesc)
+            };
 
             string header = "BLUEPRINT:" + string.Join(",", components);
             string hashedData = header + ",\"" + b64Data;
