@@ -3,6 +3,13 @@ using DspBlueprinter.Diagnosis;
 
 Console.WriteLine("DSP Blueprinter Console");
 
+
+var smelterBp = "BLUEPRINT:0,10,0,0,0,0,0,0,638525923225190441,0.10.30.22243,New%20Blueprint,\"H4sIAAAAAAAAC4WMMQ6AMAwDnXaAlZHPFB7KO5g78ikwJUQhLGAp0slyTgBkPOnaibGAwGa16GwhqcXOadZNHdfIQYWjL6DlbpLbL5HSgOrPkb9FeIlSHMfnf1F20QnldBaxCgEAAA==\"0DE6C18708D5D03C8095B57E95C16487";
+var bp = Blueprint.FromBlueprintString(smelterBp);
+var decodedData = bp.DecodedData;
+
+Console.WriteLine("DONE");
+
 // List blueprints:
 //foreach (var bpFile in FileManager.BlueprintFiles())
 //{

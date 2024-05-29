@@ -1,0 +1,1 @@
+﻿Based on https://github.com/LRFalk01/DSP-Blueprint-Parser/
