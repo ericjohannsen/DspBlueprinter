@@ -69,14 +69,13 @@ namespace DspBlueprinter
             for (uint buildingId = 0; buildingId < (uint)buildingHeader["building_count"].data; buildingId++)
             {
                 var building = BlueprintBuilding.Deserialize(data, offset);
-                var startOfBuilding = offset;
 
                 offset += building.Size;
                 buildings.Add(building);
             }
 
             return new BlueprintData(
-                header.Select(h => new { Key = h.Key, Value = h.Value.data }).ToDictionary(k => k.Key, v => v.Value).ToImmutableDictionary(), 
+                header.Select(h => new { h.Key, Value = h.Value.data }).ToDictionary(k => k.Key, v => v.Value).ToImmutableDictionary(), 
                 areas.ToImmutableList(), 
                 buildings.ToImmutableList());
         }

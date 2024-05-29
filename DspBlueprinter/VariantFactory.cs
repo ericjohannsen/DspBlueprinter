@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DspBlueprinter.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,16 @@ namespace DspBlueprinter
             }
         }
 
+        static Dictionary<DysonSphereItem, DysonSphereModel> itemToModelMap = new Dictionary<DysonSphereItem, DysonSphereModel>()
+        {
+            { DysonSphereItem.ConveyorBeltMKI, DysonSphereModel.ConveyorBeltMKI},
+            { DysonSphereItem.ConveyorBeltMKII, DysonSphereModel.ConveyorBeltMkII },
+            { DysonSphereItem.ConveyorBeltMKIII, DysonSphereModel.ConveyorBeltMkIII },
+            { DysonSphereItem.SorterMKI, DysonSphereModel.SorterMKI },
+            { DysonSphereItem.SorterMKII, DysonSphereModel.SorterMKII },
+            { DysonSphereItem.SorterMKIII, DysonSphereModel.SorterMKIII },
+            { DysonSphereItem.PileSorter, DysonSphereModel.PileSorter },
+        };
         private static Blueprint Modify(Blueprint original, VariantDescripion variant)
         {
             var replacementMap = variant.BuildingReplacementMap();
@@ -39,7 +50,13 @@ namespace DspBlueprinter
                 {
                     Console.WriteLine($"        Replacing {modified.DecodedData.Buildings[i].Item} with {replaceWith}");
                     var dataOffset = building.ItemIdOffset;
-                    modified.WriteDataInt32(dataOffset, (int)replaceWith);
+                    if (itemToModelMap.TryGetValue(replaceWith, out var model))
+                    {
+                        modified.WriteDataInt16(dataOffset, (short)replaceWith);
+                        modified.WriteDataInt16(dataOffset + 2, (short)model);
+                    }
+                    else
+                        throw new Exception($"Item ID {replaceWith} is not mapped to a model ID. Add a mapping.");                    
                 }
             }
 

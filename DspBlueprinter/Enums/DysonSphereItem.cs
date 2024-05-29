@@ -90,6 +90,7 @@ namespace DspBlueprinter.Enums
         SorterMKI = 2011,
         SorterMKII = 2012,
         SorterMKIII = 2013,
+        PileSorter = 2014,
         Splitter = 2020,
         StorageMKI = 2101,
         StorageMKII = 2102,
